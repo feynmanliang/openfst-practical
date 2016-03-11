@@ -1,5 +1,6 @@
 #!/usr/bin/zsh
 
+SYMBOLS=$DIR/table1.txt
 source 0-source-me.zsh
 
 # 1. Given the alphabet L = {a, b, ...z, A, B, ...Z,<space>}, for which a
@@ -53,11 +54,11 @@ if [[ -f 1d.txt ]]; then
   rm 1d.txt
 fi
 
-not_space_star_fst=$(fstdifference 1a.fst 1b.fst \
+word_fst=$(fstdifference 1a.fst 1b.fst \
   | fstclosure)
 a_fst=$(echo '0 1 a a\n1' \
   | fstcompile --isymbols=$SYMBOLS --osymbols=$SYMBOLS -)
-fstconcat <(echo $a_fst) <(echo $not_space_star_fst) \
-  | fstconcat <(echo $not_space_star_fst) - \
+fstconcat <(echo $a_fst) <(echo $word_fst) \
+  | fstconcat <(echo $word_fst) - \
   > 1d.fst
 draw '1d'

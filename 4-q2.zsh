@@ -1,5 +1,6 @@
 #!/usr/bin/zsh
 
+SYMBOLS=$DIR/table1.txt
 source 0-source-me.zsh
 
 # 2. Using the automata in Question 1 as the building blocks, use appropriate
@@ -26,6 +27,28 @@ fstintersect 1c.fst 1d.fst \
 draw '2c'
 
 # (d) Accepts a word that is capitalized or does not contain an a.
+word_fst=$(fstdifference 1a.fst 1b.fst \
+  | fstclosure \
+  | fstrmepsilon \
+  | fstdeterminize \
+  | fstminimize)
+a_fst=$(cat 1d.fst \
+  | fstrmepsilon \
+  | fstdeterminize \
+  | fstminimize)
+no_a_fst=$(fstdifference <(echo $word_fst) <(echo $a_fst))
+fstunion 1c.fst <(echo $no_a_fst) \
+  > 2d.fst
+draw '2d'
 
 # (e) Accepts a word that is capitalized or does not contain an a without using fstunion.
-
+cap_fst=$(cat 1c.fst \
+  | fstrmepsilon \
+  | fstdeterminize \
+  | fstminimize)
+not_cap_fst=$(fstdifference <(echo $word_fst) <(echo $cap_fst))
+# de-morgan's law, cap OR no_a <=> NOT ((NOT cap) AND a)
+fstintersect <(echo $not_cap_fst) <(echo $a_fst) \
+  | fstdifference <(echo $word_fst) - \
+  > 2e.fst
+draw '2e'

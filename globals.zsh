@@ -1,7 +1,5 @@
 #!/usr/bin/zsh
 
-export SYMBOLS=$DIR/table1.txt
-
 compile_and_draw() {
   name=$1
   fstcompile --isymbols=$SYMBOLS --osymbols=$SYMBOLS $name.txt $name.fst
