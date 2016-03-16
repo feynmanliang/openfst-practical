@@ -36,7 +36,7 @@ draw '2c'
 
 # (d) Accepts a word that is capitalized or does not contain an a.
 word_fst=$(fstdifference 1a.min.fst 1b.min.fst \
-  | fstclosure -)
+  | fstclosure)
 no_a_fst=$(fstdifference <(echo $word_fst) 1d.min.fst)
 fstunion 1c.min.fst <(echo $no_a_fst) \
   > 2d.fst
@@ -44,9 +44,12 @@ epsdetmin '2d'
 draw '2d'
 
 # (e) Accepts a word that is capitalized or does not contain an a without using fstunion.
-not_cap_fst=$(fstdifference <(echo $word_fst) 1c.min.fst)
 # de-morgan's law, cap OR no_a <=> NOT ((NOT cap) AND a)
-fstintersect <(echo $not_cap_fst) 1d.min.fst \
+fstdifference <(echo $word_fst) 1c.min.fst \
+  | fstintersect - 1d.min.fst \
+  | fstrmepsilon \
+  | fstdeterminize \
+  | fstminimize \
   | fstdifference <(echo $word_fst) - \
   > 2e.fst
 epsdetmin '2e'
