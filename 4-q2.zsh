@@ -35,7 +35,8 @@ epsdetmin '2c'
 draw '2c'
 
 # (d) Accepts a word that is capitalized or does not contain an a.
-word_fst=$(fstdifference 1a.min.fst 1b.min.fst)
+word_fst=$(fstdifference 1a.min.fst 1b.min.fst \
+  | fstclosure -)
 no_a_fst=$(fstdifference <(echo $word_fst) 1d.min.fst)
 fstunion 1c.min.fst <(echo $no_a_fst) \
   > 2d.fst

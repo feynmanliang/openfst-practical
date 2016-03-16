@@ -220,7 +220,8 @@ fstintersect 1c.min.fst 1d.min.fst \
       \item \texttt{word\_fst} accepts zero or more letters in $L$ (excluding
         <space>):
         \begin{lstlisting}[language=bash]
-word_fst=$(fstdifference 1a.min.fst 1b.min.fst)
+word_fst=$(fstdifference 1a.min.fst 1b.min.fst \
+  | fstclosure -)
         \end{lstlisting}
 
         Taking the complement of the 1(d) acceptor (letter ``a'') with respect to
@@ -265,9 +266,10 @@ fstintersect <(echo $not_cap_fst) 1d.min.fst \
   > 2e.fst
         \end{lstlisting}
 
+        % TODO: rerun
         There are 2 states with 51 arcs both before and after \texttt{epsdetmin}.
         This is less states and arcs than the 2(d) acceptor implementing the
-        same regular expression. % TODO: why?
+        same regular expression.
     \end{enumerate}
 
   \item We first implement a transducer mapping nonzero numbers to their English form and
@@ -691,24 +693,14 @@ fstcompose result2.fst $LM \
   > result_lm.fst
     \end{lstlisting}
     yields the decoding:
-    \begin{verbatim}
-w h e t h e r <space> i <space> s h a l l <space> t u r n <space> o u t
-<space> t o <space> b e <space> t h e <space> h e r o <space> o f <space> m y
-<space> o w n <space> l i f e , <space> o r <space> w h e t h e r <space> t h
-a t <space> s t a t i o n <space> w i l l <space> b e <space> h e l d <space>
-b y <space> a n y b o d y <space> e l s e , <space> t h e s e <space> p a g e
-s <space> m u s t <space> s h o w . <space> t o <space> b e g i n <space> m y
-<space> l i f e <space> w i t h <space> t h e <space> b e g i n n i n g
-<space> o f <space> m y <space> l i f e , <space> i <space> r e c o r d
-<space> t h a t <space> i <space> w a s <space> b o r n <space> a s <space> i
-<space> h a v e <space> b e e n <space> i n f o r m e d <space> a n d <space>
-b e l i e v e <space> o n <space> a <space> f r i d a y , <space> a t <space>
-t w e l v e <space> o c l o c k <space> a t <space> n i g h t . <space> i t
-<space> w a s <space> r e m a r k e d <space> t h a t <space> t h e <space> c
-l o c k <space> b e g a n <space> t o <space> s t r i k e , <space> a n d
-<space> i <space> b e g a n <space> t o <space> c r y , <space> s i m u l t a
-n e o u s l y.
-    \end{verbatim}
+    \begin{quote}
+      whether i shall turn out to be the hero of my own life, or whether that
+      station will be held by anybody else, these pages must show. to begin my
+      life with the beginning of my life, i record that i was born as i have
+      been informed and believe on a friday, at twelve oclock at night. it was
+      remarked that the clock began to strike, and i began to cry,
+      simultaneously.
+    \end{quote}
 
   \item We construct a FST which swaps two characters.  For every
     possible pair of letters, the FST is taken from $0$ to a unique state
@@ -762,24 +754,14 @@ python swap_letter_fst.py 'letter_swap'
   > result2_lm.fst
     \end{lstlisting}
     Decoding the text yields:
-    \begin{verbatim}
-w h e t h e r <space> i <space> s h a l l <space> t u r n <space> o u t
-<space> t o <space> b e <space> t h e <space> h e r o <space> o f <space> m y
-<space> o w n <space> l i f e , <space> o r <space> w h e t h e r <space> t h
-a t <space> s t a t i o n <space> w i l l <space> b e <space> h e l d <space>
-b y <space> a n y b o d y <space> e l s e , <space> t h e s e <space> p a g e
-s <space> m u s t <space> s h o w . <space> t o <space> b e g i n <space> m y
-<space> l i f e <space> w i t h <space> t h e <space> b e g i n n i n g
-<space> o f <space> m y <space> l i f e , <space> i <space> r e c o r d
-<space> t h a t <space> i <space> w a s <space> b o r n <space> a s <space> i
-<space> h a v e <space> b e e n <space> i n f o r m e d <space> a n d <space>
-b e l i e v e <space> o n <space> a <space> f r i d a y , <space> a t <space>
-t w e l v e <space> o c l o c k <space> a t <space> n i g h t . <space> i t
-<space> w a s <space> r e m a r k e d <space> t h a t <space> t h e <space> c
-l o c k <space> b e g a n <space> t o <space> s t r i k e , <space> a n d
-<space> i <space> b e g a n <space> t o <space> c r y , <space> s i m u l t a
-n e o u s l y .         0
-    \end{verbatim}
+    \begin{quote} %TODO: are the two really the same decoding?
+      whether i shall turn out to be the hero of my own life, or whether that station
+      will be held by anybody else, these pages must show. to begin my life
+      with the beginning of my life, i record that i was born as i have been
+      informed and believe on a friday, at twelve oclock at night. it was
+      remarked that the clock began to strike, and i began to cry,
+      simultaneously.
+    \end{quote}
   \end{enumerate}
 \end{enumerate}
 
