@@ -104,7 +104,7 @@ fstconcat nonzero.fst append_hundred.fst \
   | fstunion - zero.fst \
   > hundred.fst
 
-(echo $pair_nonzero_fst) \
+fstunion <(echo $pair_nonzero_fst) <(echo $pair_zero_fst) \
   > ten.fst
 
 cat > zero_explicit.txt <<EOF
@@ -118,25 +118,32 @@ fstconcat zero.fst zero.fst \
   | fstconcat - zero_explicit.fst \
   > all_zero.fst
 
-input_fst=$(printf "%s\n" \
-  "0 1 1 1"\
-  "1 2 0 0"\
-  "2 3 3 3"\
-  "3 4 2 2"\
-  "4 5 0 0"\
-  "5" \
-  | fstcompile --isymbols=$SYMBOLS --osymbols=$SYMBOLS -)
-
 model_fst=$(fstconcat thousand.fst hundred.fst \
   | fstconcat - ten.fst \
   | fstunion - all_zero.fst)
 
-result_fst=$(fstcompose <(echo $input_fst) <(echo $model_fst) \
-  | fstproject --project_output)
 
-print "Input:"
-fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS <(echo $input_fst)
-print "Model:"
-fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS <(echo $model_fst)
-print "Result:"
-fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS <(echo $result_fst)
+test_io() {
+  input_fst=$(printf "%s\n" \
+    "0 1 $1 $1"\
+    "1 2 $2 $2"\
+    "2 3 $3 $3"\
+    "3 4 $4 $4"\
+    "4 5 $5 $5"\
+    "5" \
+    | fstcompile --isymbols=$SYMBOLS --osymbols=$SYMBOLS -)
+
+  result_fst=$(fstcompose <(echo $input_fst) <(echo $model_fst) \
+    | fstproject --project_output)
+
+  print "Input:"
+  fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS <(echo $input_fst)
+  print "Result:"
+  fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS <(echo $result_fst)
+}
+
+test_io 0 0 0 0 0
+test_io 0 0 0 2 4
+test_io 0 0 1 0 0
+test_io 0 1 1 0 6
+test_io 4 0 0 0 1
