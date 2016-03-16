@@ -34,13 +34,13 @@ compile_and_draw 'zero'
 
 fstunion zero.fst nonzero.fst digits.fst
 
-cat > one.txt <<EOF
+cat > teens1.txt <<EOF
 0 1 1 <eps>
 1
 EOF
-compile_and_draw 'one'
+compile_and_draw 'teens1'
 
-cat > teens.txt <<EOF
+cat > teens2.txt <<EOF
 0 1 0 ten
 0 1 1 eleven
 0 1 2 twelve
@@ -53,9 +53,12 @@ cat > teens.txt <<EOF
 0 1 9 nineteen
 1
 EOF
-compile_and_draw 'teens'
+compile_and_draw 'teens2'
 
-cat > tens.txt <<EOF
+fstconcat teens1.fst teens2.fst \
+  > teens.fst
+
+cat > tens1.txt <<EOF
 0 1 2 twenty
 0 1 3 thirty
 0 1 4 forty
@@ -66,13 +69,20 @@ cat > tens.txt <<EOF
 0 1 9 ninety
 1
 EOF
-compile_and_draw 'tens'
+compile_and_draw 'tens1'
+
+fstconcat tens1.fst digits.fst \
+  > tens.fst
 
 # recognizes all two consecutive digits except 00
 pair_nonzero_fst=$(fstunion \
   <(fstconcat zero.fst nonzero.fst) \
   <(fstconcat one.fst teens.fst) \
   | fstunion - <(fstconcat tens.fst digits.fst))
+pair_nonzero_fst=$(fstunion \
+  teens.fst \
+  <(fstconcat zero.fst nonzero.fst) \
+  | fstunion - tens.fst)
 # recognizes 00
 pair_zero_fst=$(fstconcat zero.fst zero.fst)
 
