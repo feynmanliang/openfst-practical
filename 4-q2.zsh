@@ -43,8 +43,7 @@ epsdetmin '2d'
 draw '2d'
 
 # (e) Accepts a word that is capitalized or does not contain an a without using fstunion.
-cap_fst=$(cat 1c.min.fst)
-not_cap_fst=$(fstdifference <(echo $word_fst) <(echo $cap_fst))
+not_cap_fst=$(fstdifference <(echo $word_fst) 1c.min.fst)
 # de-morgan's law, cap OR no_a <=> NOT ((NOT cap) AND a)
 fstintersect <(echo $not_cap_fst) 1d.min.fst \
   | fstdifference <(echo $word_fst) - \
