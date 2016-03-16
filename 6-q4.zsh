@@ -61,15 +61,15 @@ echo $((i-1)) >> message.txt
 # cat message.txt
 compile_and_draw 'message'
 
-#print "Encode:"
-#fstcompose message.fst rot13.fst \
-#  > encode.fst
-#fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS encode.fst
-#
-#print "Decode:"
-#fstcompose encode.fst rot13.fst \
-#  > decode.fst
-#fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS decode.fst
+print "Encode:"
+fstcompose message.fst rot13.fst \
+  > encode.fst
+fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS encode.fst
+
+print "Decode:"
+fstcompose encode.fst rot13.fst \
+  > decode.fst
+fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS decode.fst
 
 
 #(c) We wish to decipher the message that can be found in the file
@@ -120,17 +120,18 @@ rot1316_decoder=$(fstunion rot13.fst rot16.fst \
 #fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS <(echo $rot1316_decoder)
 
 encoded=$DIR/4.encoded1.fst
-
 fstcompose $encoded <(echo $rot1316_decoder) \
   | fstproject --project_output \
   > result.fst
+printstrings.O2 --label-map=$SYMBOLS --input=$encoded -w 2> /dev/null
 
-#print "Before rmepsilon, determinize, minimize:"
-#printstrings.O2 --label-map=$SYMBOLS --input=result.fst -n 10 -w 2> /dev/null
+print "Before rmepsilon, determinize, minimize:"
+fstinfo result.fst
 
-#print "After rmepsilon, determinize, minimize:"
-#fstrmepsilon result.fst | fstdeterminize | fstminimize - result2.fst
-#printstrings.O2 --label-map=$SYMBOLS --input=result2.fst -n 10 -w 2> /dev/null
+print "After rmepsilon, determinize, minimize:"
+fstrmepsilon result.fst | fstdeterminize | fstminimize - result2.fst
+#printstrings.O2 --label-map=$SYMBOLS --input=result2.fst -n 10000 -w 2> /dev/null | wc -l
+fstinfo result2.fst
 
 
 #(d) We now know that the original text belongs to Charles Dickens’ David Copperfield novel.
@@ -144,7 +145,7 @@ LM=$DIR/4.lm.fst
 
 fstcompose result2.fst $LM \
   > result_lm.fst
-#printstrings.O2 --label-map=$SYMBOLS --input=result_lm.fst -n 10 -w 2> /dev/null
+printstrings.O2 --label-map=$SYMBOLS --input=result_lm.fst -n 10 -w 2> /dev/null
 
 # whether i shall turn out to be the hero of my own life or whether
 # that station will be held by anybody else, these pages must show. to
