@@ -76,10 +76,6 @@ fstconcat tens1.fst digits.fst \
 
 # recognizes all two consecutive digits except 00
 pair_nonzero_fst=$(fstunion \
-  <(fstconcat zero.fst nonzero.fst) \
-  <(fstconcat one.fst teens.fst) \
-  | fstunion - <(fstconcat tens.fst digits.fst))
-pair_nonzero_fst=$(fstunion \
   teens.fst \
   <(fstconcat zero.fst nonzero.fst) \
   | fstunion - tens.fst)
@@ -123,8 +119,8 @@ fstconcat zero.fst zero.fst \
   > all_zero.fst
 
 input_fst=$(printf "%s\n" \
-  "0 1 3 3"\
-  "1 2 1 1"\
+  "0 1 1 1"\
+  "1 2 0 0"\
   "2 3 3 3"\
   "3 4 2 2"\
   "4 5 0 0"\
