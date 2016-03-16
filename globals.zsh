@@ -11,6 +11,14 @@ draw() {
   fstdraw --isymbols=$SYMBOLS --osymbols=$SYMBOLS --acceptor $name.fst \
     | dot -Tps \
     > output/$name.ps
-  ps2pdf output/$name.ps output/$name.pdf
+  ps2pdf -dEPSCrop output/$name.ps output/$name.pdf
 }
 
+epsdetmin() {
+  fst=$1
+  cat $fst.fst \
+    | fstrmepsilon \
+    | fstdeterminize \
+    | fstminimize \
+    > $fst.min.fst
+}
