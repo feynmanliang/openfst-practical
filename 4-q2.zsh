@@ -45,8 +45,8 @@ draw '2d'
 
 # (e) Accepts a word that is capitalized or does not contain an a without using fstunion.
 # de-morgan's law, cap OR no_a <=> NOT ((NOT cap) AND a)
-fstdifference <(echo $word_fst) 1c.min.fst \
-  | fstintersect - 1d.min.fst \
+not_cap_fst=$(fstdifference <(echo $word_fst) 1c.min.fst)
+fstintersect <(echo $not_cap_fst) 1d.min.fst \
   | fstrmepsilon \
   | fstdeterminize \
   | fstminimize \

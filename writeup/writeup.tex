@@ -221,7 +221,7 @@ fstintersect 1c.min.fst 1d.min.fst \
         <space>):
         \begin{lstlisting}[language=bash]
 word_fst=$(fstdifference 1a.min.fst 1b.min.fst \
-  | fstclosure -)
+  | fstclosure)
         \end{lstlisting}
 
         Taking the complement of the 1(d) acceptor (letter ``a'') with respect to
@@ -238,8 +238,8 @@ no_a_fst=$(fstdifference <(echo $word_fst) 1d.min.fst)
 fstunion 1c.fst <(echo $no_a_fst) \
   > 2d.fst
         \end{lstlisting}
-        There are 4 states with 104 arcs before \texttt{epsdetmin} and 3
-        states with 77 arcs after.
+        There are 5 states with 106 arcs before \texttt{epsdetmin} and 4
+        states with 180 arcs after.
 
       \item Another way to implement the 2(d) FST is to use De Morgan's law and
         the law of double negation, which together imply
@@ -260,16 +260,19 @@ not_cap_fst=$(fstdifference <(echo $word_fst) 1c.min.fst)
         ``a'') yields an implementation of $\lnot ((\lnot \texttt{cap}) \land
         (\lnot \texttt{no\_a}))$, which we can complement with respect to
         \texttt{word\_fst} to yield an acceptor for a word that is capitalized
-        or does not contain an ``a'': \begin{lstlisting}[language=bash]
+        or does not contain an ``a'':
+        \begin{lstlisting}[language=bash]
 fstintersect <(echo $not_cap_fst) 1d.min.fst \
+  | fstrmepsilon \
+  | fstdeterminize \
   | fstdifference <(echo $word_fst) - \
   > 2e.fst
         \end{lstlisting}
+        Note that $\epsilon$ and determinization is required for
+        performing \texttt{fstdifference}.
 
-        % TODO: rerun
-        There are 2 states with 51 arcs both before and after \texttt{epsdetmin}.
-        This is less states and arcs than the 2(d) acceptor implementing the
-        same regular expression.
+        There are 8 states with 184 arcs before \texttt{epsdetmin} and
+        4 states with 180 arcs after (just like in the minimized 2(d) FST).
     \end{enumerate}
 
   \item We first implement a transducer mapping nonzero numbers to their English form and
