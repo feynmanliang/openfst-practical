@@ -49,7 +49,6 @@ not_cap_fst=$(fstdifference <(echo $word_fst) 1c.min.fst)
 fstintersect <(echo $not_cap_fst) 1d.min.fst \
   | fstrmepsilon \
   | fstdeterminize \
-  | fstminimize \
   | fstdifference <(echo $word_fst) - \
   > 2e.fst
 epsdetmin '2e'
