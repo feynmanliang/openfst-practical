@@ -101,7 +101,7 @@ cat $DIR/table1.txt \
 echo 1 >> 1a.txt
         \end{lstlisting}
 
-      \item~//
+      \item~%
         \begin{figure}[ht!]
           \begin{center}
             \includegraphics[trim={0 3.7in 0 3.7in},clip,scale=0.5]{output/1b.pdf}
@@ -114,7 +114,8 @@ cat > 1b.txt <<EOF
 EOF
         \end{lstlisting}
 
-      \item \texttt{upper\_fst} accepts a single uppercase character:
+      \item We first define \texttt{upper\_fst}, which accepts a single
+        uppercase character:
         \begin{lstlisting}[language=bash]
 upper_fst=$((cat $SYMBOLS \
   | cut -d ' ' -f 1 \
@@ -124,7 +125,8 @@ upper_fst=$((cat $SYMBOLS \
   | fstcompile --isymbols=$SYMBOLS --osymbols=$SYMBOLS -)
         \end{lstlisting}
 
-        \texttt{lower\_star\_fst} accepts zero or more lowercase characters:
+        We then define \texttt{lower\_star\_fst}, which accepts zero or more
+        lowercase characters:
         \begin{lstlisting}[language=bash]
 lower_star_fst=$((cat $SYMBOLS \
   | cut -d ' ' -f 1 \
@@ -140,16 +142,17 @@ lower_star_fst=$((cat $SYMBOLS \
 fstconcat <(echo $upper_fst) <(echo $lower_star_fst) > 1c.fst
         \end{lstlisting}
 
-      \item \texttt{word\_fst} accepts a string of zero or more letters in $L$
-        excluding <space>. It is formed by taking the 1(a) acceptor (any single
-        letter in $L$ including <space>), taking the difference with the 1(b) acceptor
-        (single <space>), and taking the closure:
+      \item We first define \texttt{word\_fst} to accept a string of zero or more
+        letters in $L$ excluding <space>. It is formed by taking the 1(a)
+        acceptor (any single letter in $L$ including <space>), taking the
+        difference with the 1(b) acceptor (single <space>), and taking the
+        closure:
         \begin{lstlisting}[language=bash]
 word_fst=$(fstdifference 1a.fst 1b.fst \
   | fstclosure)
         \end{lstlisting}
 
-        \texttt{a\_fst} accepts the single character ``a'':
+        Next, we define \texttt{a\_fst} to accept a single letter ``a'':
         \begin{lstlisting}[language=bash]
 a_fst=$(echo '0 1 a a\n1' \
   | fstcompile --isymbols=$SYMBOLS --osymbols=$SYMBOLS -)
@@ -185,7 +188,7 @@ done
     \begin{enumerate}[label=(\alph*)]
       \item
         We concatenate the 1(c) acceptor (capitalized word) with the Kleene
-        plus of the 1(b) acceptor (one or more spaces) to yield an acceptor for
+        plus of the 1(b) acceptor (a single space) to yield an acceptor for
         a single capitalized word followed by one or more spaces. Taking its
         Kleene closure yields an acceptor for zero or more words, each followed
         by one or more spaces:
@@ -586,7 +589,7 @@ cat > rot13.txt <<EOF
 EOF
         \end{lstlisting}
 
-      \item We use a loop to create an acceptor \texttt{message} for the message:
+      \item We first create an acceptor \texttt{message} accepting ``my secret message'':
         \begin{lstlisting}[language=bash]
 message="my secret message"
 for ((i=1; i <= ${#message}; i++)); do
@@ -770,18 +773,18 @@ python swap_letter_fst.py --fstName=letter_swap
   | fstcompose -  rot13.fst \
   | fstcompose - <(fstclosure letter_swap.fst) \
   | fstproject --project_output \
-  | fstrmepsilon result.fst | fstdeterminize | fstminimize - \
+  | fstrmepsilon | fstdeterminize | fstminimize \
   | fstcompose - $LM \
   > result2_lm.fst
     \end{lstlisting}
     The resulting decoded text is:
-    \begin{quote} %TODO: are the two really the same decoding?
-      whether i shall turn out to be the hero of my own life, or whether that station
-      will be held by anybody else, these pages must show. to begin my life
-      with the beginning of my life, i record that i was born as i have been
-      informed and believe on a friday, at twelve oclock at night. it was
-      remarked that the clock began to strike, and i began to cry,
-      simultaneously.
+    \begin{quote}
+      i dont know how long we were going, and to this hour i know as little where we
+      went. perhaps it was near guildford. perhaps some arabiannight magician,
+      opened up the place for the day, and shut it up for ever when we came
+      away. it was a green spot, on a hill, carpeted with soft turf. there were
+      shady trees, and heather, and, as far as the eye could see, a rich
+      landscape.
     \end{quote}
   \end{enumerate}
 \end{enumerate}
