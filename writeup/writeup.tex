@@ -46,7 +46,7 @@
     \texttt{a b c a} is not.
 
     \begin{lstlisting}[language=bash]
-printstrings.O2 --label-map=isyms.txt --input=input.fst -n 10 -w 2> /dev/null
+$ printstrings.O2 --label-map=isyms.txt --input=input.fst -n 10 -w 2> /dev/null
 a b c   0
 a b a a         0.3
 a b c a         0.4
@@ -56,7 +56,7 @@ a b     1
   \item 4 paths, encoding 3 distinct strings.
 
     \begin{lstlisting}[language=bash]
-printstrings.O2 --label-map=osyms.txt --input=result.fst -n 10 -w 2> /dev/null
+$ printstrings.O2 --label-map=osyms.txt --input=result.fst -n 10 -w 2> /dev/null
 x y x   0.7
 x z x x         0.8
 x z     1.3
@@ -66,7 +66,8 @@ x y x   1.6
   \item 3 paths, encoding 3 distinct strings. This is because determinization leaves
     one distinct path per distinct string.
     \begin{lstlisting}[language=bash]
-printstrings.O2 --label-map=osyms.txt --input=result.fst -n 10 -w 2> /dev/null
+$ fstrmepsilon result.fst | fstdeterminize | fstminimize > result2.fst
+$ printstrings.O2 --label-map=osyms.txt --input=result2.fst -n 10 -w 2> /dev/null
 x y x   0.700195
 x z x x         0.799805
 x z     1.2998
@@ -79,9 +80,8 @@ x z     1.2998
     \end{figure}
 
   \item In \autoref{fig:prelim-model}, the \texttt{a:x/0.1} arc forms a
-    loop on accepting state $3$, so an infinite number of strings are accepted.
-    For example, any input matching the regular expression ``cba$^*$'' is
-    accepted by the model.
+    loop on accepting state $3$, so an infinite number of input strings (i.e.\
+    any matching the regex ``[abc]ba$^*$'') are accepted.
 \end{enumerate}
 
 \section{Practical Exercise}
@@ -90,9 +90,8 @@ x z     1.2998
   \item
     \begin{enumerate}[label=(\alph*)]
       \item
-        We create an acceptor with a start state $0$, end state $1$, and
+        We create an acceptor with a start state $0$, final state $1$, and
         arcs $0 \to 1$ accepting any symbol in $L$ (including <space>)
-        except for <eps>.
         \begin{lstlisting}[language=bash]
 cat $DIR/table1.txt \
   | cut -d ' ' -f 1 \
@@ -102,18 +101,18 @@ cat $DIR/table1.txt \
 echo 1 >> 1a.txt
         \end{lstlisting}
 
-      \item~\\
+      \item~//
+        \begin{figure}[ht!]
+          \begin{center}
+            \includegraphics[trim={0 3.7in 0 3.7in},clip,scale=0.5]{output/1b.pdf}
+          \end{center}
+        \end{figure}
         \begin{lstlisting}[language=bash]
 cat > 1b.txt <<EOF
 0 1 <space> <space>
 1
 EOF
         \end{lstlisting}
-        \begin{figure}[ht!]
-          \begin{center}
-            \includegraphics[trim={0 3.7in 0 3.7in},clip,scale=0.5]{output/1b.pdf}
-          \end{center}
-        \end{figure}
 
       \item \texttt{upper\_fst} accepts a single uppercase character:
         \begin{lstlisting}[language=bash]
@@ -142,8 +141,8 @@ fstconcat <(echo $upper_fst) <(echo $lower_star_fst) > 1c.fst
         \end{lstlisting}
 
       \item \texttt{word\_fst} accepts a string of zero or more letters in $L$
-        excluding <space> and <eps>. It is formed by taking the 1(a) acceptor
-        (any single letter in $L$), differencing it with the 1(b) acceptor
+        excluding <space>. It is formed by taking the 1(a) acceptor (any single
+        letter in $L$ including <space>), taking the difference with the 1(b) acceptor
         (single <space>), and taking the closure:
         \begin{lstlisting}[language=bash]
 word_fst=$(fstdifference 1a.fst 1b.fst \
@@ -156,7 +155,7 @@ a_fst=$(echo '0 1 a a\n1' \
   | fstcompile --isymbols=$SYMBOLS --osymbols=$SYMBOLS -)
         \end{lstlisting}
 
-        Concatenating $\texttt{word\_fst} \circ \texttt{a\_fst} \circ \texttt{word\_fst}$
+        Concatenating $\texttt{word\_fst} + \texttt{a\_fst} + \texttt{word\_fst}$
         yields an FST accepting a word containing the letter ``a''
         \begin{lstlisting}[language=bash]
 fstconcat <(echo $a_fst) <(echo $word_fst) \
@@ -166,7 +165,8 @@ fstconcat <(echo $a_fst) <(echo $word_fst) \
 
     \end{enumerate}
 
-  \item We first remove $\epsilon$s, determinize, and minimize all FSTs from Question 1:
+  \item We first perform $\epsilon$-removal, determinize, and minimize all FSTs
+    from Question 1:
     \begin{lstlisting}[language=bash]
 epsdetmin() {
   fst=$1
@@ -180,15 +180,15 @@ for fst in '1a' '1b' '1c' '1d'; do
   epsdetmin $fst
 done
     \end{lstlisting}
-    This makes future FST operations efficient.
+    These minimized FSTs are used as primitives in constructing the following FSTs.
 
     \begin{enumerate}[label=(\alph*)]
       \item
-        We concatenate the 1(c) acceptor (capitalized word) with
-        the Kleene plus of the 1(b) acceptor (one or more spaces)
-        to yield an acceptor for a single capitalized word followed
-        by one or more spaces. Taking its Kleene closure yields an
-        acceptor for zero or more words followed by spaces:
+        We concatenate the 1(c) acceptor (capitalized word) with the Kleene
+        plus of the 1(b) acceptor (one or more spaces) to yield an acceptor for
+        a single capitalized word followed by one or more spaces. Taking its
+        Kleene closure yields an acceptor for zero or more words, each followed
+        by one or more spaces:
         \begin{lstlisting}[language=bash]
 fstclosure --closure_plus 1b.min.fst \
   | fstconcat 1c.min.fst - \
@@ -198,9 +198,9 @@ fstclosure --closure_plus 1b.min.fst \
         There are 5 states with 57 arcs before \texttt{epsdetmin} ($\epsilon$-removal,
         determinize, minimize) and 3 states with 80 arcs after.
 
-      \item Since 1(c) accepts a word beginning in a capital letter, unioning
+      \item Since 1(c) accepts a word beginning in a capital letter, taking the union
         1(c) with its reverse yields an acceptor for a word either beginning or
-        ending a capitalized letter:
+        ending in a capitalized letter:
         \begin{lstlisting}[language=bash]
 fstreverse 1c.min.fst \
   | fstunion 1c.min.fst - \
@@ -209,30 +209,31 @@ fstreverse 1c.min.fst \
         There are 5 states with 106 arcs before \texttt{epsdetmin} and 4
         states with 130 arcs after.
 
-      \item Intersecting 1(c) (capitalized word) with 1(d) (letter ``a'') yields
-        an acceptor for a word that is capitalized and contains the letter ``a'':
+      \item Intersecting 1(c) (capitalized word) with 1(d) (word containing
+        letter ``a'') yields an acceptor for a word that is capitalized and
+        contains the letter ``a'':
         \begin{lstlisting}[language=bash]
 fstintersect 1c.min.fst 1d.min.fst \
   > 2c.fst
         \end{lstlisting}
         There are 3 states with 78 arcs both before and after \texttt{epsdetmin}.
 
-      \item \texttt{word\_fst} accepts zero or more letters in $L$ (excluding
-        <space>):
+      \item \texttt{word\_fst} (repeated from 1(d)) accepts zero or more
+        letters in $L$ (excluding <space>):
         \begin{lstlisting}[language=bash]
 word_fst=$(fstdifference 1a.min.fst 1b.min.fst \
   | fstclosure)
         \end{lstlisting}
 
-        Taking the complement of the 1(d) acceptor (letter ``a'') with respect to
-        \texttt{word\_fst} yields \texttt{no\_a\_fst}, an acceptor for words
-        not containing ``a'':
+        Taking the complement of the 1(d) acceptor (a word containing letter
+        ``a'') with respect to \texttt{word\_fst} yields \texttt{no\_a\_fst},
+        an acceptor for a word not containing ``a'':
         \begin{lstlisting}[language=bash]
 no_a_fst=$(fstdifference <(echo $word_fst) 1d.min.fst)
         \end{lstlisting}
 
-        Unioning \texttt{no\_a\_fst} (words not containing ``a'') with
-        the 1(c) acceptor (capitalized words) yields an acceptor for
+        Taking the union \texttt{no\_a\_fst} (a word not containing ``a'') with
+        the 1(c) acceptor (a capitalized word) yields an acceptor for
         a word that is capitalized or does not contain an ``a'':
         \begin{lstlisting}[language=bash]
 fstunion 1c.fst <(echo $no_a_fst) \
@@ -241,26 +242,30 @@ fstunion 1c.fst <(echo $no_a_fst) \
         There are 5 states with 106 arcs before \texttt{epsdetmin} and 4
         states with 180 arcs after.
 
-      \item Another way to implement the 2(d) FST is to use De Morgan's law and
-        the law of double negation, which together imply
+      \item Take $\Omega := \{ w \in L^* :
+        \texttt{word\_fst}~\text{accepts}~w\}$ to be our universal set (i.e.\
+        for a predicate $A$, $\lnot A \equiv \Omega \setminus \{w \in L^*:
+        A(w)~\text{holds}\}$ in the set theory/Boolean algebra equivalence).
+        Let \texttt{cap} denote the predicate that a word is capitalized and
+        \texttt{no\_a} the predicate that a word does not contain the letter
+        ``a.'' Using De Morgan's law and the law of double negation:
         \begin{align}
-          \texttt{cap} \lor \texttt{no\_a} \equiv
+          \texttt{cap} \lor \texttt{no\_a} \iff
           \lnot ((\lnot \texttt{cap}) \land (\lnot \texttt{no\_a}))
         \end{align}
 
-        We first form \texttt{not\_cap\_fst}, which implements $\lnot
-        \texttt{cap}$, by taking the complement of the 1(c) acceptor
-        (capitalized word) with respect to \texttt{word\_fst} (zero or
-        more letters from $L$ excluding <space>):
+        We first form \texttt{not\_cap\_fst}, which implements an acceptor for
+        the predicate $\lnot \texttt{cap}$, by taking the complement of the
+        1(c) acceptor (capitalized word) with respect to \texttt{word\_fst}:
         \begin{lstlisting}[language=bash]
 not_cap_fst=$(fstdifference <(echo $word_fst) 1c.min.fst)
         \end{lstlisting}
 
-        Intersecting \texttt{not\_cap\_fst} with the FST from 1(d) (letter
-        ``a'') yields an implementation of $\lnot ((\lnot \texttt{cap}) \land
-        (\lnot \texttt{no\_a}))$, which we can complement with respect to
-        \texttt{word\_fst} to yield an acceptor for a word that is capitalized
-        or does not contain an ``a'':
+        Intersecting \texttt{not\_cap\_fst} with the FST from 1(d) (a word
+        containing the letter ``a'') yields an implementation of $((\lnot
+        \texttt{cap}) \land (\lnot \texttt{no\_a}))$, which we can complement
+        with respect to \texttt{word\_fst} to yield an acceptor for a word that
+        is capitalized or does not contain an ``a'':
         \begin{lstlisting}[language=bash]
 fstintersect <(echo $not_cap_fst) 1d.min.fst \
   | fstrmepsilon \
@@ -271,13 +276,16 @@ fstintersect <(echo $not_cap_fst) 1d.min.fst \
         Note that $\epsilon$ and determinization is required for
         performing \texttt{fstdifference}.
 
-        There are 8 states with 184 arcs before \texttt{epsdetmin} and
-        4 states with 180 arcs after (just like in the minimized 2(d) FST).
+        There are 8 states with 184 arcs before \texttt{epsdetmin} and 4 states
+        with 180 arcs after. Compared to 2(d), the FST is significantly larger
+        before \texttt{epsdetmin} but the same size after. This is unsurprising
+        since the two should accept the same set of strings and FSTs have a
+        unique (up to graph isomorphism) minimal representation.
     \end{enumerate}
 
-  \item We first implement a transducer mapping nonzero numbers to their English form and
-    ignores zeros. \texttt{nonzero} defines a transducer mapping a single numeric
-    digit to its English form:
+  \item We first implement \texttt{digits}, a transducer mapping a single
+    nonzero number to its English form and zero to <eps>. \texttt{nonzero}
+    defines a transducer mapping a single numeric digit to its English form:
     \begin{lstlisting}[language=bash]
 cat > nonzero.txt <<EOF
 0 1 1 one
@@ -306,8 +314,8 @@ EOF
 fstunion zero.fst nonzero.fst digits.fst
     \end{lstlisting}
 
-    To handle numbers in $11-19$, \texttt{teens1} consumes a single ``1''
-    (the first of two digits) without producing any output:
+    To handle two digit pairs in $11-19$, \texttt{teens1} consumes a single
+    ``1'' (the first of two digits) without producing any output:
     \begin{lstlisting}[language=bash]
 cat > teens1.txt <<EOF
 0 1 1 <eps>
@@ -338,8 +346,8 @@ fstconcat teens1.fst teens2.fst \
   > teens.fst
     \end{lstlisting}
 
-    We now handle the two digit pairs $20-99$
-    \texttt{tens} handles the first of two digits:
+    We now tackle the two digit pairs in the range $20-99$.
+    \texttt{tens1} handles the first of two digits:
     \begin{lstlisting}[language=bash]
 cat > tens1.txt <<EOF
 0 1 2 twenty
@@ -359,9 +367,10 @@ fstconcat tens1.fst digits.fst \
   > tens.fst
     \end{lstlisting}
 
-    To handle two digit pairs $01-09$, we concatenate \texttt{zero}
-    with \texttt{nonzero}. Unioning the result with \texttt{tens}
-    and \texttt{teens} yields a transducer for all nonzero pairs $01-99$ (\texttt{pair\_nonzero\_fst}):
+    To handle two digit pairs in the range $01-09$, we concatenate \texttt{zero}
+    with \texttt{nonzero}. Taking the union of the result with \texttt{tens}
+    and \texttt{teens} yields a transducer mapping all nonzero pairs of digits $01-99$
+    to their English read form (\texttt{pair\_nonzero\_fst}):
     \begin{lstlisting}[language=bash]
 pair_nonzero_fst=$(fstunion \
   teens.fst \
@@ -369,9 +378,10 @@ pair_nonzero_fst=$(fstunion \
   | fstunion - tens.fst)
     \end{lstlisting}
 
-    We would like to reuse \texttt{pair\_nonzero\_fst} to transduce the thousands place i.e.\
-    the first 2 of the 5 digits. To ensure that we only output ``thousand'' when it is non-zero,
-    we construct \texttt{pair\_zero\_fst} to recognize a pair of zeros:
+    We would like to use \texttt{pair\_nonzero\_fst} to transduce the thousands
+    place i.e.\ the first 2 of the 5 digits. To ensure that we only output
+    ``thousand'' when it is non-zero, we construct \texttt{pair\_zero\_fst} to
+    recognize a pair of zeros:
     \begin{lstlisting}[language=bash]
 pair_zero_fst=$(fstconcat zero.fst zero.fst)
     \end{lstlisting}
@@ -385,7 +395,7 @@ EOF
     \texttt{thousand} can now be implemented by concatenating
     \texttt{pair\_nonzero\_fst} with \texttt{append\_thousand}
     to append the ``thousand'' suffix when it is nonzero and
-    unioning with \texttt{pair\_zero\_fst} to emit nothing
+    then taking the union with \texttt{pair\_zero\_fst} to emit nothing
     when it is zero:
     \begin{lstlisting}[language=bash]
 fstconcat <(echo $pair_nonzero_fst) <(cat append_thousand.fst) \
@@ -410,15 +420,15 @@ fstconcat nonzero.fst append_hundred.fst \
     \end{lstlisting}
 
     After handling the hundreds, the tens and ones place (\texttt{ten}) can
-    simply union \texttt{pair\_nonzero\_fst} with \texttt{pair\_zero\_fst}:
+    simply reuse \texttt{pair\_nonzero\_fst} (which handles $01-99$):
     \begin{lstlisting}[language=bash]
 (echo $pair_nonzero_fst) \
   > ten.fst
     \end{lstlisting}
 
-    However, the string \texttt{00000} is a corner case not yet handled. To include
-    this, we implement \texttt{zero\_explicit} to recognize this case and output
-    ``zero'':
+    Since \texttt{pair\_nonzero\_fst} does not handle \texttt{00}, the string
+    \texttt{00000} is a corner case not yet handled. To include this, we
+    implement \texttt{all\_zero} to recognize this case and output ``zero'':
     \begin{lstlisting}[language=bash]
 cat > zero_explicit.txt <<EOF
 0 1 0 zero
@@ -433,7 +443,7 @@ fstconcat zero.fst zero.fst \
 
     The final model is obtained by first concatenating \texttt{thousand},
     \texttt{hundred}, and \texttt{ten} to yield a transducer for
-    digits within $00001-99999$. \texttt{zero\_explicit} is then
+    digits within $00001-99999$. \texttt{all\_zero} is then
     unioned in to handle the $00000$ case:
     \begin{lstlisting}[language=bash]
 model_fst=$(fstconcat thousand.fst hundred.fst \
@@ -456,16 +466,12 @@ test_io() {
   result_fst=$(fstcompose <(echo $input_fst) <(echo $model_fst) \
     | fstproject --project_output)
 
-  print "Input:"
-  fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS <(echo $input_fst)
-  print "Result:"
   fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS <(echo $result_fst)
 }
     \end{lstlisting}
 
     \begin{lstlisting}[language=bash]
-test_io 0 0 0 0 0
-Result:
+$ test_io 0 0 0 0 0
 0       1       <eps>   <eps>
 0       2       <eps>   <eps>
 1       3       <eps>   <eps>
@@ -493,8 +499,7 @@ Result:
     \end{lstlisting}
 
     \begin{lstlisting}[language=bash]
-test_io 0 0 0 2 4
-Result:
+$ test_io 0 0 0 2 4
 0       1       <eps>   <eps>
 1       2       <eps>   <eps>
 2       3       <eps>   <eps>
@@ -511,8 +516,7 @@ Result:
 13
     \end{lstlisting}
     \begin{lstlisting}[language=bash]
-test_io 0 0 1 0 0
-Result:
+$ test_io 0 0 1 0 0
 0       1       <eps>   <eps>
 1       2       <eps>   <eps>
 2       3       <eps>   <eps>
@@ -529,8 +533,7 @@ Result:
 13
     \end{lstlisting}
     \begin{lstlisting}[language=bash]
-test_io 0 1 1 0 6
-Result:
+$ test_io 0 1 1 0 6
 0       1       <eps>   <eps>
 1       2       <eps>   <eps>
 2       3       <eps>   <eps>
@@ -549,8 +552,7 @@ Result:
 15
     \end{lstlisting}
     \begin{lstlisting}[language=bash]
-test_io 4 0 0 0 1
-Result:
+$ test_io 4 0 0 0 1
 0       1       <eps>   <eps>
 1       2       forty   forty
 2       3       <eps>   <eps>
@@ -595,61 +597,58 @@ for ((i=1; i <= ${#message}; i++)); do
   fi
 done
 echo $((i-1)) >> message.txt
+fstcompile --isymbols=$SYMBOLS --osymbols=$SYMBOLS message.txt
     \end{lstlisting}
 
     Composing with the \texttt{rot13} transducer gives the encoded message:
     \begin{lstlisting}[language=bash]
-fstcompose message.fst rot13.fst \
-  > encode.fst
-fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS encode.fst
-
-    Encode:
-    0       1       m       z
-    1       2       y       l
-    3       3       <space> <space>
-    3       4       s       f
-    4       5       e       r
-    5       6       c       p
-    6       7       r       e
-    7       8       e       r
-    8       9       t       g
-    9       10      <space> <space>
-    10      11      m       z
-    11      12      e       r
-    12      13      s       f
-    13      14      s       f
-    14      15      a       n
-    15      16      g       t
-    16      17      e       r
-    17
+$  fstcompose message.fst rot13.fst \
+     > encode.fst
+$  fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS encode.fst
+0       1       m       z
+1       2       y       l
+3       3       <space> <space>
+3       4       s       f
+4       5       e       r
+5       6       c       p
+6       7       r       e
+7       8       e       r
+8       9       t       g
+9       10      <space> <space>
+10      11      m       z
+11      12      e       r
+12      13      s       f
+13      14      s       f
+14      15      a       n
+15      16      g       t
+16      17      e       r
+17
     \end{lstlisting}
 
     Since \texttt{rot13} is an involution, we can compose the encoded
     message again with \texttt{rot13} to decode:
     \begin{lstlisting}[language=bash]
-fstcompose encode.fst rot13.fst \
-  > decode.fst
-fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS decode.fst
-
-    Decode:
-    0       1       m       m
-    1       2       y       y
-    2       3       <space> <space>
-    3       4       s       s
-    4       5       e       e
-    5       6       c       c
-    6       7       r       r
-    7       8       e       e
-    8       9       t       t
-    9       10      <space> <space>
-    10      11      m       m
-    11      12      e       e
-    12      13      s       s
-    13      14      s       s
-    14      15      a       a
-    15      16      g       g
-    16      17      e       e
-    17
+$ fstcompose encode.fst rot13.fst \
+    > decode.fst
+$ fstprint --isymbols=$SYMBOLS --osymbols=$SYMBOLS decode.fst
+0       1       m       m
+1       2       y       y
+2       3       <space> <space>
+3       4       s       s
+4       5       e       e
+5       6       c       c
+6       7       r       r
+7       8       e       e
+8       9       t       t
+9       10      <space> <space>
+10      11      m       m
+11      12      e       e
+12      13      s       s
+13      14      s       s
+14      15      a       a
+15      16      g       g
+16      17      e       e
+17
     \end{lstlisting}
 
   \item We first define the \texttt{rot16} transducer:
@@ -666,14 +665,18 @@ cat > rot16.txt <<EOF
 EOF
     \end{lstlisting}
 
-    To permit both transductions, we take the union and the closure
-    to form \texttt{rot1316\_decoder}:
+    To permit both transductions an arbitrary number of times, we take the
+    union and the closure to form \texttt{rot1316\_decoder}:
     \begin{lstlisting}[language=bash]
 rot1316_decoder=$(fstunion rot13.fst rot16.fst \
   | fstclosure \
   | fstrmepsilon)
     \end{lstlisting}
+    \texttt{fstrmepsilon} is required for \texttt{fstcompose} to work.
 
+    We then compose the encoded text acceptor with \texttt{rot1316\_decoder} to
+    yield \texttt{result}, a FST outputting all possible decodings for the
+    given encoded input:
     \begin{lstlisting}[language=bash]
 encoded=$DIR/4.encoded1.fst
 fstcompose $encoded <(echo $rot1316_decoder) \
@@ -684,18 +687,19 @@ fstcompose $encoded <(echo $rot1316_decoder) \
     366 states with 649 arcs after.
 
     From examining the encoded message \texttt{encoded}, we see that there are
-    284 possible characters.  Since each character can either be encoded using
-    $rot13$ or $rot16$, there are a total of $2^284$ possible distinct strings
-    through the FST!
+    284 letters that are not <space>.  Since each letter can either be
+    encoded using $rot13$ or $rot16$, there are a total of $2^{284}$ possible
+    distinct output strings represented by the FST!
 
-
-  \item Composing with the language model:
+  \item Post-composing with the language model:
     \begin{lstlisting}[language=bash]
 LM=$DIR/4.lm.fst
 fstcompose result2.fst $LM \
   > result_lm.fst
     \end{lstlisting}
-    yields the decoding:
+    This has the effect of filtering the output strings in \texttt{result} to only
+    those which appear in \emph{David Copperfield}. We obtain a single decoding
+    for the encoded input:
     \begin{quote}
       whether i shall turn out to be the hero of my own life, or whether that
       station will be held by anybody else, these pages must show. to begin my
@@ -705,27 +709,39 @@ fstcompose result2.fst $LM \
       simultaneously.
     \end{quote}
 
-  \item We construct a FST which swaps two characters.  For every
-    possible pair of letters, the FST is taken from $0$ to a unique state
-    between $100-125$ after reading the two letters. The only path from this
-    state to the end state ($99$) outputs the two letters reversed. Since only
-    some pairs of consecutive letters are swapped, thre is also a path directly
-    from the start state to the end state to handle unswapped pairs. For single
-    letter inputs, the transducer simply acts as the identity.
+  \item We construct a FST with initial state 0 and goal state 99 which swaps two characters.
+
+    Our FST acts as the identity on <space>, punctuation, and single letters.
+    Given these inputs, the FST is taken directly from the initial state to
+    the goal state and outputs the same symbol that was consumed.
+
+    For every possible pair of letters, the first letter takes the FST goes
+    from the start state $0$ to a unique state $i \in [1,27]$ and produces no
+    output.  Consuming the second character, the FST is taken to state $i+100$
+    and the second character is outputted. The only transition out of $i+100$
+    is to the goal state $99$ through an <eps> edge which outputs the character
+    corresponding to $i$. Effectively, the input pair is swapped in the output.
     \begin{lstlisting}[language=python]
 #!/usr/bin/python
 
 def make_fst(fstName):
     with open(fstName + '.txt', 'w') as f:
+        # NO_OP on <space> and punctuation
         f.write("""0 99 <space> <space>
 0 99 . .
 0 99 , ,
 """)
         for i,c in enumerate([chr(k) for k in range(ord('a'), ord('z')+1)]):
-            f.write("0 {0} {1} {1}\n".format(99, c)) # pass-through
-            f.write("0 {0} {1} <eps>\n".format(i+1, c)) # swap
+            # NO_OP on single letters
+            f.write("0 {0} {1} {1}\n".format(99, c))
+
+            # swap letter pairs
+            # 0 => i, consume first letter and output <eps>
+            f.write("0 {0} {1} <eps>\n".format(i+1, c))
             for d in [chr(k) for k in range(ord('a'), ord('z')+1)]:
+                # i => i+100, consume and output second letter
                 f.write("{0} {1} {2} {3}\n".format(i+1, i+100, d, d))
+                # i+100 => 99, consume <eps> and output first letter
                 f.write(" {0} 99 <eps> {1}\n".format(i+100, c))
         f.write("99\n")
 
@@ -739,14 +755,16 @@ if __name__ == "__main__":
     make_fst(args.fstName)
     \end{lstlisting}
 
-    Using this Python script (\texttt{swap\_letter\_fst.py}), we define a transducer
-    for swapping pairs of letters (\texttt{letter\_swap}). We then form
-    $\texttt{encoded} \circ \texttt{rot13} \circ \texttt{letter\_swap}^*$ which
-    first performs $rot13$ followed by swappnig some pairs of consecutive letters.
+    Using this Python script (\texttt{swap\_letter\_fst.py}), we define a
+    transducer for swapping pairs of letters (\texttt{letter\_swap}). We then
+    form $\texttt{encoded} \circ \texttt{rot13} \circ \texttt{letter\_swap}^*$
+    which first performs $rot13$ on the encoded input followed by swapping some
+    pairs of consecutive letters. We then project on the output, perform
+    $\epsilon$-removal, and restrict the output to the language model:
     \begin{lstlisting}[language=bash]
 encoded=$DIR/4.encoded2.fst
 
-python swap_letter_fst.py 'letter_swap'
+python swap_letter_fst.py --fstName=letter_swap
 
 (cat $encoded) \
   | fstcompose -  rot13.fst \
@@ -756,7 +774,7 @@ python swap_letter_fst.py 'letter_swap'
   | fstcompose - $LM \
   > result2_lm.fst
     \end{lstlisting}
-    Decoding the text yields:
+    The resulting decoded text is:
     \begin{quote} %TODO: are the two really the same decoding?
       whether i shall turn out to be the hero of my own life, or whether that station
       will be held by anybody else, these pages must show. to begin my life
