@@ -192,24 +192,23 @@ compile_and_draw 'letter_swap'
   | fstcompose -  rot13.fst \
   | fstcompose - <(fstclosure letter_swap.fst) \
   | fstproject --project_output \
-  | fstrmepsilon result.fst | fstdeterminize | fstminimize - \
+  | fstrmepsilon | fstdeterminize | fstminimize \
   | fstcompose - $LM \
   > result2_lm.fst
 printstrings.O2 --label-map=$SYMBOLS --input=result2_lm.fst -n 10 -w 2> /dev/null
-
-# w h e t h e r <space> i <space> s h a l l <space> t u r n <space> o u t
-# <space> t o <space> b e <space> t h e <space> h e r o <space> o f <space> m y
-# <space> o w n <space> l i f e , <space> o r <space> w h e t h e r <space> t h
-# a t <space> s t a t i o n <space> w i l l <space> b e <space> h e l d <space>
-# b y <space> a n y b o d y <space> e l s e , <space> t h e s e <space> p a g e
-# s <space> m u s t <space> s h o w . <space> t o <space> b e g i n <space> m y
-# <space> l i f e <space> w i t h <space> t h e <space> b e g i n n i n g
-# <space> o f <space> m y <space> l i f e , <space> i <space> r e c o r d
-# <space> t h a t <space> i <space> w a s <space> b o r n <space> a s <space> i
-# <space> h a v e <space> b e e n <space> i n f o r m e d <space> a n d <space>
-# b e l i e v e <space> o n <space> a <space> f r i d a y , <space> a t <space>
-# t w e l v e <space> o c l o c k <space> a t <space> n i g h t . <space> i t
-# <space> w a s <space> r e m a r k e d <space> t h a t <space> t h e <space> c
-# l o c k <space> b e g a n <space> t o <space> s t r i k e , <space> a n d
-# <space> i <space> b e g a n <space> t o <space> c r y , <space> s i m u l t a
-# n e o u s l y .         0
+# i <space> d o n t <space> k n o w <space> h o w <space> l o n g <space> w e
+# <space> w e r e <space> g o i n g , <space> a n d <space> t o <space> t h i s
+# <space> h o u r <space> i <space> k n o w <space> a s <space> l i t t l e
+# <space> w h e r e <space> w e <space> w e n t . <space> p e r h a p s <space>
+# i t <space> w a s <space> n e a r <space> g u i l d f o r d . <space> p e r h
+# a p s <space> s o m e <space> a r a b i a n n i g h t <space> m a g i c i a n
+# , <space> o p e n e d <space> u p <space> t h e <space> p l a c e <space> f o
+# r <space> t h e <space> d a y , <space> a n d <space> s h u t <space> i t
+# <space> u p <space> f o r <space> e v e r <space> w h e n <space> w e <space>
+# c a m e <space> a w a y . <space> i t <space> w a s <space> a <space> g r e e
+# n <space> s p o t , <space> o n <space> a <space> h i l l , <space> c a r p e
+# t e d <space> w i t h <space> s o f t <space> t u r f . <space> t h e r e
+# <space> w e r e <space> s h a d y <space> t r e e s , <space> a n d <space> h
+# e a t h e r , <space> a n d , <space> a s <space> f a r <space> a s <space> t
+# h e <space> e y e <space> c o u l d <space> s e e , <space> a <space> r i c h
+# <space> l a n d s c a p e .   0
